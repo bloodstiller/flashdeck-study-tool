@@ -1,0 +1,53 @@
+services:
+  flashdeck:
+    build: .
+    container_name: flashdeck
+    ports:
+      - "8000:8000"
+    volumes:
+      - flashdeck-data:/data
+      # Optional: mount an additional notes folder to supplement the bundled cards.
+      # The bundled CSTM deck is already baked into the image at /app/cards.
+      # Uncomment and change the left side to add your own cards:
+      # - /path/to/your/notes:/extra-cards:ro
+    environment:
+      DB_PATH:   /data/flashdeck.db
+      # Points to the bundled cards inside the image (auto-imported on first boot)
+      CARDS_DIR: /app/cards
+
+      # ── Resource generation (all optional) ──────────────────────────────
+      # Option 1: Anthropic Claude API key
+      # ANTHROPIC_API_KEY: sk-ant-...
+
+      # Option 2: Ollama — start with: docker compose --profile ollama up
+      # Then uncomment:
+      # OLLAMA_HOST:  http://ollama:11434
+      # OLLAMA_MODEL: llama3
+
+      # Option 3: DuckDuckGo — no config needed, always enabled
+    restart: unless-stopped
+
+  # ── Optional: local Ollama LLM ─────────────────────────────────────────────
+  # Start with: docker compose --profile ollama up -d
+  # Then pull a model: docker exec flashdeck-ollama ollama pull llama3
+  ollama:
+    image: ollama/ollama:latest
+    container_name: flashdeck-ollama
+    profiles: [ollama]
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    # GPU support (uncomment if you have an NVIDIA GPU + nvidia-container-toolkit):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    restart: unless-stopped
+
+volumes:
+  flashdeck-data:
+  ollama-models:
