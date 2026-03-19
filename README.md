@@ -7,7 +7,7 @@ An adaptive flashcard study tool built with FastAPI and SQLite, served locally v
 ## Quick Start
 
 ```bash
-git clone <your-repo> flashdeck
+git clone https://github.com/bloodstiller/flashdeck-study-tool.git flashdeck
 cd flashdeck
 docker compose up --build
 ```
