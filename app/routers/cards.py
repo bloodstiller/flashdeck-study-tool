@@ -139,6 +139,70 @@ def _card_folder(card: Card) -> str:
             return parts[0]
     return "Uncategorised"
 
+# ── Export all cards as markdown zip ──────────────────────────────────────────
+
+@router.get("/export")
+def export_cards(db: Session = Depends(get_db)):
+    """
+    Export all cards as a zip of .md files, preserving folder structure.
+    Each file uses the noteId frontmatter format so it can be re-imported.
+    """
+    import io
+    import zipfile
+    import re
+    from fastapi.responses import StreamingResponse
+
+    cards = db.query(Card).order_by(Card.source_file, Card.id).all()
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        used_paths: set[str] = set()
+
+        for card in cards:
+            # Build folder path from source_file
+            if card.source_file and card.source_file != "Manual":
+                # source_file is like "Current Technology/What is SQL injection.md"
+                # Use its directory but derive filename from question
+                folder = "/".join(card.source_file.replace("\\", "/").split("/")[:-1])
+            else:
+                folder = "Manual"
+
+            # Derive a safe filename from the question
+            safe = re.sub(r'[^\w\s-]', '', card.question)[:60].strip()
+            safe = re.sub(r'\s+', '_', safe)
+            path = f"FlashDeck_Export/{folder}/{safe}.md" if folder else f"FlashDeck_Export/{safe}.md"
+
+            # Avoid collisions
+            base, ext = path.rsplit(".", 1)
+            counter = 1
+            while path in used_paths:
+                path = f"{base}_{counter}.{ext}"
+                counter += 1
+            used_paths.add(path)
+
+            # Build noteId-style markdown
+            lines = [
+                "---",
+                f"noteId: {card.id}",
+                "---",
+                "",
+                card.question,
+                "",
+                "---",
+                "",
+                card.answer,
+            ]
+            if card.notes:
+                lines += ["", "<!-- notes -->", card.notes]
+
+            zf.writestr(path, "\n".join(lines))
+
+    buf.seek(0)
+    return StreamingResponse(
+        buf,
+        media_type="application/zip",
+        headers={"Content-Disposition": "attachment; filename=flashdeck_export.zip"},
+    )
 
 # ── Single card ────────────────────────────────────────────────────────────────
 
@@ -322,67 +386,3 @@ def scan_cards_dir(db: Session = Depends(get_db)):
     )
 
 
-# ── Export all cards as markdown zip ──────────────────────────────────────────
-
-@router.get("/export")
-def export_cards(db: Session = Depends(get_db)):
-    """
-    Export all cards as a zip of .md files, preserving folder structure.
-    Each file uses the noteId frontmatter format so it can be re-imported.
-    """
-    import io
-    import zipfile
-    import re
-    from fastapi.responses import StreamingResponse
-
-    cards = db.query(Card).order_by(Card.source_file, Card.id).all()
-
-    buf = io.BytesIO()
-    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-        used_paths: set[str] = set()
-
-        for card in cards:
-            # Build folder path from source_file
-            if card.source_file and card.source_file != "Manual":
-                # source_file is like "Current Technology/What is SQL injection.md"
-                # Use its directory but derive filename from question
-                folder = "/".join(card.source_file.replace("\\", "/").split("/")[:-1])
-            else:
-                folder = "Manual"
-
-            # Derive a safe filename from the question
-            safe = re.sub(r'[^\w\s-]', '', card.question)[:60].strip()
-            safe = re.sub(r'\s+', '_', safe)
-            path = f"FlashDeck_Export/{folder}/{safe}.md" if folder else f"FlashDeck_Export/{safe}.md"
-
-            # Avoid collisions
-            base, ext = path.rsplit(".", 1)
-            counter = 1
-            while path in used_paths:
-                path = f"{base}_{counter}.{ext}"
-                counter += 1
-            used_paths.add(path)
-
-            # Build noteId-style markdown
-            lines = [
-                "---",
-                f"noteId: {card.id}",
-                "---",
-                "",
-                card.question,
-                "",
-                "---",
-                "",
-                card.answer,
-            ]
-            if card.notes:
-                lines += ["", "<!-- notes -->", card.notes]
-
-            zf.writestr(path, "\n".join(lines))
-
-    buf.seek(0)
-    return StreamingResponse(
-        buf,
-        media_type="application/zip",
-        headers={"Content-Disposition": "attachment; filename=flashdeck_export.zip"},
-    )
