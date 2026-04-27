@@ -1,5 +1,10 @@
---- noteId: K05 ---
-What is pre-authentication and why does it matter?
 ---
+noteId: 131
+---
+
+What is pre-authentication and why does it matter?
+
+---
+
 Pre-auth requires the client to send an encrypted timestamp before the KDC issues a TGT.
 It is enabled by default. Disabling it enables AS-REPRoasting.

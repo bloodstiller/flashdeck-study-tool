@@ -1,0 +1,9 @@
+---
+noteId: 130
+---
+
+Can the client read or modify their own TGT?
+
+---
+
+No. The TGT is encrypted with the KDC's secret key — the client holds it but cannot decrypt or alter it.

@@ -1,6 +1,11 @@
---- noteId: K01 ---
-What are the three secret keys involved in the Kerberos protocol flow?
 ---
+noteId: 127
+---
+
+What are the three secret keys involved in the Kerberos protocol flow?
+
+---
+
 1. Client/user password hash
 2. TGS (KDC) secret key
 3. Service Server (SS) secret key

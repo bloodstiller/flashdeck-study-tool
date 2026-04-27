@@ -1,5 +1,10 @@
---- noteId: K10 ---
-How does the service verify the client in AP-REQ?
 ---
+noteId: 136
+---
+
+How does the service verify the client in AP-REQ?
+
+---
+
 It decrypts the Service Ticket using its own secret key to retrieve the session key,
 then uses that session key to decrypt the authenticator and verify the client ID matches.

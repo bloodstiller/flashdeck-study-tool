@@ -1,6 +1,11 @@
---- noteId: K07 ---
-What does the KDC return in a TGS-REP?
 ---
+noteId: 133
+---
+
+What does the KDC return in a TGS-REP?
+
+---
+
 1. A Service Ticket (ST) — encrypted with the target service's secret key
 2. A new Session Key (copy 1) — encrypted with the client's session key
 3. A new Session Key (copy 2) — embedded inside the Service Ticket
